@@ -1,0 +1,11 @@
+
+[*]
+
+# ReSharper properties
+resharper_wrap_tags_and_pi = false
+resharper_xml_max_line_length = 0
+resharper_xml_pi_attribute_style = first_attribute_on_single_line
+resharper_xml_wrap_lines = false
+
+# Standard properties
+max_line_length = 0
