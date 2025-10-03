@@ -1,5 +1,5 @@
 ﻿<UserControl
-    d:DataContext="{d:DesignInstance Type=local:SteamLibrarySettingsViewModel, IsDesignTimeCreatable=True}" 
+    d:DataContext="{d:DesignInstance Type=local:SteamLibrarySettingsViewModel, IsDesignTimeCreatable=True}"
     d:DesignHeight="600"
     d:DesignWidth="800"
     mc:Ignorable="d"
@@ -232,13 +232,13 @@
 
                     <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
                         <Button
-                            Command="{Binding CancelEditSteamAccountCommand}"
-                            Content="{DynamicResource ButtonCancel}"
+                            Command="{Binding CompleteEditSteamAccountCommand}"
+                            Content="{DynamicResource ButtonSave}"
                             Margin="0,0,10,0"
                             Width="80" />
                         <Button
-                            Command="{Binding CompleteEditSteamAccountCommand}"
-                            Content="{DynamicResource ButtonSave}"
+                            Command="{Binding CancelEditSteamAccountCommand}"
+                            Content="{DynamicResource ButtonCancel}"
                             Width="80" />
                     </StackPanel>
                 </StackPanel>
