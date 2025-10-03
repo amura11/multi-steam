@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Playnite.SDK;
 
 namespace PlayniteMultiAccountSteamLibrary.Extension.Plugin;
 
@@ -14,10 +15,15 @@ public class ProcessWatcher
     private readonly int pollingInterval;
     private readonly int startTimeout;
     private readonly TimeSpan stabilizationWindow;
+    private readonly ILogger logger;
 
     public ProcessWatcher(string targetDirectory, int pollingInterval, int stabilizationInterval, int startTimeout)
+        : this(LogManager.GetLogger(), targetDirectory, pollingInterval, stabilizationInterval, startTimeout) { }
+
+    public ProcessWatcher(ILogger logger, string targetDirectory, int pollingInterval, int stabilizationInterval, int startTimeout)
     {
-        this.targetDirectory = Path.GetFullPath(targetDirectory).TrimEnd(Path.DirectorySeparatorChar);
+        this.logger = logger;
+        this.targetDirectory = NormalizedPath(targetDirectory);
         this.pollingInterval = pollingInterval;
         this.startTimeout = startTimeout;
         this.stabilizationWindow = TimeSpan.FromMilliseconds(stabilizationInterval);
@@ -27,24 +33,31 @@ public class ProcessWatcher
     {
         Process? startedProcess = null;
         var elapsed = 0;
+        
+        this.logger.Info($"Starting to watch for process in directory: {this.targetDirectory}");
 
         while (startedProcess == null && elapsed < this.startTimeout * 1000)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
             startedProcess = FindRunningProcess();
-            
+
             if (startedProcess != null)
             {
-                //TODO: Info log
+                this.logger.Info($"Found target process. Process ID: {startedProcess.Id}");
             }
             else
             {
-                //TODO: Debug log
+                this.logger.Debug($"No matching process found. Time elapsed: {elapsed}ms / {this.startTimeout * 1000}ms");
 
                 await Task.Delay(this.pollingInterval, cancellationToken);
                 elapsed += this.pollingInterval;
             }
+        }
+
+        if (startedProcess == null)
+        {
+            this.logger.Warn($"Process watch timed out after {this.startTimeout} seconds");
         }
 
         return startedProcess?.Id;
@@ -54,6 +67,8 @@ public class ProcessWatcher
     {
         DateTime? zeroObservedSinceUtc = null;
         var isRunning = true;
+        
+        this.logger.Info($"Starting to watch for process termination in directory: {this.targetDirectory}");
 
         while (isRunning == true)
         {
@@ -64,14 +79,24 @@ public class ProcessWatcher
             if (runningProcess == null)
             {
                 zeroObservedSinceUtc ??= DateTime.UtcNow;
+                var timeWithNoProcess = DateTime.UtcNow - zeroObservedSinceUtc.Value;
 
-                if (DateTime.UtcNow - zeroObservedSinceUtc.Value >= this.stabilizationWindow)
+                this.logger.Trace($"No process found for {timeWithNoProcess.TotalMilliseconds}ms. Stabilization window: {this.stabilizationWindow.TotalMilliseconds}ms");
+
+                if (timeWithNoProcess >= this.stabilizationWindow)
                 {
+                    this.logger.Info("Process has remained terminated through stabilization window");
                     isRunning = false;
                 }
             }
             else
             {
+                if (zeroObservedSinceUtc.HasValue)
+                {
+                    this.logger.Debug($"Process found again after being missing. Resetting stabilization window");
+                    zeroObservedSinceUtc = null;
+                }
+
                 await Task.Delay(this.pollingInterval, cancellationToken);
             }
         }
@@ -82,6 +107,7 @@ public class ProcessWatcher
         Process? foundProcess = null;
 
         var processes = Process.GetProcesses();
+        this.logger.Debug($"Scanning {processes.Length} running processes");
 
         foreach (var process in processes)
         {
@@ -89,6 +115,7 @@ public class ProcessWatcher
 
             if (string.IsNullOrEmpty(executablePath))
             {
+                this.logger.Trace($"Process {process.Id}: Could not get executable path");
                 continue;
             }
 
@@ -96,23 +123,37 @@ public class ProcessWatcher
 
             if (string.IsNullOrEmpty(executableDirectory))
             {
+                this.logger.Trace($"Process {process.Id}: Could not get directory from path '{executablePath}'");
                 continue;
             }
 
-            var normalizedExecutableDirectory = Path.GetFullPath(executableDirectory).TrimEnd(Path.DirectorySeparatorChar);
+            var normalizedExecutableDirectory = NormalizedPath(executableDirectory);
 
-            if (string.Equals(normalizedExecutableDirectory, this.targetDirectory, StringComparison.OrdinalIgnoreCase))
+            if (normalizedExecutableDirectory.StartsWith(this.targetDirectory, StringComparison.InvariantCultureIgnoreCase))
             {
-                //TODO: Debug log
-
+                this.logger.Debug($"Found matching process. ID: {process.Id}, Path: {executablePath}");
                 foundProcess = process;
                 break;
             }
+            else
+            {
+                this.logger.Trace($"Process {process.Id}: Directory did not match target, Path: {executablePath} Normalized directory '{normalizedExecutableDirectory}");
+            }
+        }
+
+        if (foundProcess == null)
+        {
+            this.logger.Debug($"No process found running from {this.targetDirectory}");
         }
 
         return foundProcess;
     }
 
+    private string NormalizedPath(string path)
+    {
+        return Path.GetFullPath(path).TrimEnd(Path.DirectorySeparatorChar);
+    }
+    
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern IntPtr OpenProcess(ProcessAccessFlags processAccess, bool inheritHandle, int processId);
 

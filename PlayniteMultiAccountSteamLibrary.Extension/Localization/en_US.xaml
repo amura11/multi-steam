@@ -1,5 +1,5 @@
-<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
     <sys:String x:Key="HeaderSwitcherToolSettings">TcNo Launcher Settings</sys:String>
     <sys:String x:Key="SwitcherToolInstallButton">Install/Update</sys:String>
@@ -10,4 +10,24 @@
     <sys:String x:Key="SwitcherToolInstallButtonFailed">Failed</sys:String>
     <sys:String x:Key="LabelSwitcherToolLocalVersion">Local Tool Version:</sys:String>
     <sys:String x:Key="LabelSwitcherToolRemoteVersion">Remote Tool Version:</sys:String>
+    <sys:String x:Key="HeaderSteamAccounts">Steam Accounts</sys:String>
+    <sys:String x:Key="ButtonBrowse">Browse...</sys:String>
+    <sys:String x:Key="ButtonEdit">Edit</sys:String>
+    <sys:String x:Key="ButtonDelete">Delete</sys:String>
+    <sys:String x:Key="ButtonAddAccount">Add Account</sys:String>
+    <sys:String x:Key="HeaderEditAccount">Edit Account</sys:String>
+    <sys:String x:Key="LabelAccountName">Account Name</sys:String>
+    <sys:String x:Key="LabelSteamId">Steam ID</sys:String>
+    <sys:String x:Key="LabelSteamApiKey">Steam API Key</sys:String>
+    <sys:String x:Key="LabelTestingCredentials">Testing credentials...</sys:String>
+    <sys:String x:Key="ButtonCancel">Cancel</sys:String>
+    <sys:String x:Key="ButtonSave">Save</sys:String>
+    <sys:String x:Key="DialogDeleteAccountTitle">Confirm Delete</sys:String>
+    <sys:String x:Key="DialogDeleteAccountMessage">Are you sure you want to delete this Steam account? This action cannot be undone.</sys:String>
+    <sys:String x:Key="ErrorSwitcherToolInstalling">Switcher tool is still installing, please wait.</sys:String>
+    <sys:String x:Key="ErrorAccountEditing">A steam account is still being added or edited, please wait</sys:String>
+    <sys:String x:Key="ErrorInvalidLauncherLocation">Invalid launcher location.</sys:String>
+    <sys:String x:Key="ErrorAccountFieldsRequired">All fields are required.</sys:String>
+    <sys:String x:Key="ErrorAccountIdNotUnique">The Steam ID must be unique.</sys:String>
+    <sys:String x:Key="ErrorAccountNameNotUnique">The account name must be unique.</sys:String>
 </ResourceDictionary>

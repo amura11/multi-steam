@@ -3,11 +3,7 @@ using Playnite.SDK.Models;
 using Playnite.SDK.Plugins;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Controls;
 using PlayniteMultiAccountSteamLibrary.Extension.Plugin;
 using PlayniteMultiAccountSteamLibrary.Extension.Steam;
@@ -23,9 +19,7 @@ namespace PlayniteMultiAccountSteamLibrary.Extension
 
         public SteamLibraryPlugin(IPlayniteAPI api) : base(api)
         {
-            bool isProcess64Bit = Environment.Is64BitProcess;
-            
-            this.settingsViewModel = new SteamLibrarySettingsViewModel(this);
+            this.settingsViewModel = new SteamLibrarySettingsViewModel(this, api);
 
             this.Properties = new LibraryPluginProperties()
             {
@@ -40,8 +34,6 @@ namespace PlayniteMultiAccountSteamLibrary.Extension
         public override LibraryClient Client { get; } = new SteamLibraryClient();
 
         private SteamLibrarySettingsModel Settings => this.settingsViewModel.Settings;
-
-        private string ExtensionPath => Path.GetDirectoryName(this.GetType().Assembly.Location)!;
         
         public override IEnumerable<GameMetadata> GetGames(LibraryGetGamesArgs args)
         {

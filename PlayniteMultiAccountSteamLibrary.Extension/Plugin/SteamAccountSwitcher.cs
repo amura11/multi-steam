@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Playnite.SDK;
@@ -39,6 +40,12 @@ public class SteamAccountSwitcher
             return true;
         }
 
+        var switchSuccess = await PerformAccountSwitch(desiredSteamId, cancellationToken);
+        if (!switchSuccess)
+        {
+            return false;
+        }
+
         this.logger.Debug("Waiting for Steam user switch...");
 
         var isSwitched = false;
@@ -72,12 +79,6 @@ public class SteamAccountSwitcher
 
     private async Task<bool> WaitForSteamLaunch(CancellationToken cancellationToken)
     {
-        if (Process.GetProcessesByName("steam").Length > 0)
-        {
-            this.logger.Info("Steam already started");
-            return true;
-        }
-
         this.logger.Debug("Waiting for Steam to start...");
 
         var elapsed = 0;
@@ -105,5 +106,85 @@ public class SteamAccountSwitcher
         }
 
         return isRunning;
+    }
+    
+    
+    private async Task WaitForProcessExitAsync(Process process, CancellationToken cancellationToken)
+    {
+        await Task.Run(() =>
+        {
+            while (!process.HasExited)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    try
+                    {
+                        process.Kill();
+                    }
+                    catch
+                    {
+                        // Ignore if already exited or cannot kill
+                    }
+
+                    throw new OperationCanceledException(cancellationToken);
+                }
+
+                Thread.Sleep(200);
+            }
+        }, cancellationToken);
+    }
+
+    private async Task<bool> PerformAccountSwitch(string desiredSteamId, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrEmpty(this.settings.LauncherLocation))
+        {
+            this.logger.Error("LauncherLocation is not set. Cannot launch account switch tool.");
+            return false;
+        }
+
+        var result = false;
+
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = this.settings.LauncherLocation!,
+            Arguments = $"+s:{desiredSteamId} -silent",
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        try
+        {
+            var process = Process.Start(startInfo);
+            if (process != null)
+            {
+                try
+                {
+                    this.logger.Debug($"Switching Steam account to {desiredSteamId}");
+
+                    await WaitForProcessExitAsync(process, cancellationToken);
+                    result = true;
+
+                    this.logger.Info($"Switched Steam account to {desiredSteamId}");
+                }
+                catch (OperationCanceledException)
+                {
+                    this.logger.Warn("Waiting for account switch tool process was cancelled.");
+                }
+                catch (Exception exception)
+                {
+                    this.logger.Error($"Error while waiting for account switch tool process to exit: {exception.Message}");
+                }
+            }
+            else
+            {
+                this.logger.Error("Failed to start account switch tool process.");
+            }
+        }
+        catch (Exception exception)
+        {
+            this.logger.Error($"Failed to launch account switch tool: {exception.Message}");
+        }
+
+        return result;
     }
 }

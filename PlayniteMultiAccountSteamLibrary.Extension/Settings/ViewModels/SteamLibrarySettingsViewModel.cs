@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows;
 using Microsoft.Win32;
 using Playnite.SDK;
 using Playnite.SDK.Data;
 using PlayniteMultiAccountSteamLibrary.Extension.Steam;
 using PlayniteMultiAccountSteamLibrary.Extension.SwitcherTool;
+
 // ReSharper disable AsyncVoidMethod
 
 namespace PlayniteMultiAccountSteamLibrary.Extension
@@ -15,6 +17,7 @@ namespace PlayniteMultiAccountSteamLibrary.Extension
     public class SteamLibrarySettingsViewModel : ObservableObject, ISettings
     {
         private readonly SteamLibraryPlugin plugin;
+        private readonly IPlayniteAPI playniteApi;
         private SteamLibrarySettingsModel? editingClone;
         private SteamLibrarySettingsModel settings = null!;
         private SteamAccountSettingsModel? editingAccount;
@@ -25,15 +28,16 @@ namespace PlayniteMultiAccountSteamLibrary.Extension
         private bool isSwitcherToolInstallButtonEnabled;
         private string switcherToolInstallButtonTextKey = "SwitcherToolInstallButton";
         private string? installErrorMessage;
-        private string? accountValidationErrorMessage;
+        private string? addEditSteamAccountValidationMessage;
         private bool isTestingAccountCredentials;
 
         private readonly ILogger logger = LogManager.GetLogger();
 
-        public SteamLibrarySettingsViewModel(SteamLibraryPlugin plugin)
+        public SteamLibrarySettingsViewModel(SteamLibraryPlugin plugin, IPlayniteAPI playniteApi)
         {
             // Injecting your plugin instance is required for Save/Load method because Playnite saves data to a location based on what plugin requested the operation.
             this.plugin = plugin;
+            this.playniteApi = playniteApi;
 
             // Load saved settings.
             var savedSettings = plugin.LoadPluginSettings<SteamLibrarySettingsModel>();
@@ -43,8 +47,9 @@ namespace PlayniteMultiAccountSteamLibrary.Extension
 
             this.AddSteamAccountCommand = new RelayCommand(AddSteamAccount);
             this.EditSteamAccountCommand = new RelayCommand<SteamAccountSettingsModel>(EditSteamAccount);
+            this.DeleteSteamAccountCommand = new RelayCommand<SteamAccountSettingsModel>(DeleteSteamAccount);
             this.CancelEditSteamAccountCommand = new RelayCommand(CancelAddEditSteamAccount, CanCancelAddEditSteamAccount);
-            this.CompleteEditSteamAccountCommand = new RelayCommand(CompleteEditSteamAccount, CanCompleteEditSteamAccount);
+            this.CompleteEditSteamAccountCommand = new RelayCommand(CompleteAddEditSteamAccount, CanCompleteAddEditSteamAccount);
             this.BrowseForSwitcherToolCommand = new RelayCommand(BrowseForSwitcherTool);
             this.InstallSwitcherToolCommand = new RelayCommand(InstallSwitcherTool, CanInstallSwitcherTool);
             this.Settings.PropertyChanged += OnSettingsChanged;
@@ -55,6 +60,8 @@ namespace PlayniteMultiAccountSteamLibrary.Extension
         public RelayCommand AddSteamAccountCommand { get; }
 
         public RelayCommand<SteamAccountSettingsModel> EditSteamAccountCommand { get; }
+
+        public RelayCommand<SteamAccountSettingsModel> DeleteSteamAccountCommand { get; }
 
         public RelayCommand CancelEditSteamAccountCommand { get; }
 
@@ -119,10 +126,10 @@ namespace PlayniteMultiAccountSteamLibrary.Extension
             set => SetValue(ref this.installErrorMessage, value);
         }
 
-        public string? AccountValidationErrorMessage
+        public string? AddEditSteamAccountValidationMessage
         {
-            get => this.accountValidationErrorMessage;
-            set => SetValue(ref this.accountValidationErrorMessage, value);
+            get => this.addEditSteamAccountValidationMessage;
+            set => SetValue(ref this.addEditSteamAccountValidationMessage, value);
         }
 
         public bool IsTestingAccountCredentials
@@ -152,17 +159,17 @@ namespace PlayniteMultiAccountSteamLibrary.Extension
 
             if (this.isInstallingSwitcherTool == true)
             {
-                errors.Add("Switcher tool is still installing, please wait.");
+                errors.Add(this.playniteApi.Resources.GetString("ErrorSwitcherToolInstalling"));
             }
 
             if (this.IsTestingAccountCredentials == true)
             {
-                errors.Add("A steam account is still being added or edited, please wait");
+                errors.Add(this.playniteApi.Resources.GetString("ErrorAccountEditing"));
             }
 
             if (string.IsNullOrWhiteSpace(this.Settings.LauncherLocation) || File.Exists(this.Settings.LauncherLocation) == false)
             {
-                errors.Add("Invalid launcher location.");
+                errors.Add(this.playniteApi.Resources.GetString("ErrorInvalidLauncherLocation"));
             }
 
             return errors.Count == 0;
@@ -182,33 +189,81 @@ namespace PlayniteMultiAccountSteamLibrary.Extension
             this.EditingAccount = account.Clone();
         }
 
+        private void DeleteSteamAccount(SteamAccountSettingsModel account)
+        {
+            this.logger.Debug($"User requested to delete Steam account: {account.Id}");
+
+            var result = this.playniteApi.Dialogs.ShowMessage(
+                this.playniteApi.Resources.GetString("DialogDeleteAccountMessage"),
+                this.playniteApi.Resources.GetString("DialogDeleteAccountTitle"),
+                MessageBoxButton.YesNo
+            );
+
+            if (result == MessageBoxResult.Yes)
+            {
+                var accountToRemove = this.Settings.SteamAccountSettings.FirstOrDefault(a => a.Id == account.Id);
+                if (accountToRemove != null)
+                {
+                    this.Settings.SteamAccountSettings.Remove(accountToRemove);
+                    this.logger.Info($"Steam account deleted: {account.Id}");
+                }
+            }
+        }
+
         private bool CanCancelAddEditSteamAccount()
         {
             return this.IsTestingAccountCredentials == false;
         }
-        
+
         private void CancelAddEditSteamAccount()
         {
             this.logger.Debug("User cancelled editing Steam account");
             this.EditingAccount = null;
         }
 
-        private bool CanCompleteEditSteamAccount()
+        private bool CanCompleteAddEditSteamAccount()
         {
             return this.IsTestingAccountCredentials == false;
         }
-        
-        private async void CompleteEditSteamAccount()
+
+        private async void CompleteAddEditSteamAccount()
         {
             this.logger.Debug("User requested to save Steam account");
+            
+            this.AddEditSteamAccountValidationMessage = null;
             
             if (this.editingAccount == null)
             {
                 this.logger.Error("CompleteEditSteamAccount called with null editingAccount");
                 throw new ArgumentException();
             }
+            
+            // Additional validation: required fields
+            if (string.IsNullOrWhiteSpace(this.editingAccount.Id) || string.IsNullOrWhiteSpace(this.editingAccount.Name) || string.IsNullOrWhiteSpace(this.editingAccount.Key))
+            {
+                this.AddEditSteamAccountValidationMessage = this.playniteApi.Resources.GetString("ErrorAccountFieldsRequired");
+                return;
+            }
 
-            this.AccountValidationErrorMessage = null;
+            // Additional validation: unique Id and Name
+            var duplicateId = (this.isNewAccount == true && this.Settings.SteamAccountSettings.Any(x => x.Id == this.editingAccount.Id)
+                               || (this.isNewAccount == false && this.Settings.SteamAccountSettings.Count(x => x.Id == this.editingAccount.Id) > 1));
+
+            var duplicateName = (this.isNewAccount == true && this.Settings.SteamAccountSettings.Any(x => string.Equals(x.Name, this.editingAccount.Name, StringComparison.InvariantCultureIgnoreCase))
+                                 || (this.isNewAccount == false && this.Settings.SteamAccountSettings.Count(x => string.Equals(x.Name, this.editingAccount.Name, StringComparison.InvariantCultureIgnoreCase)) > 1));
+
+            if (duplicateId)
+            {
+                this.AddEditSteamAccountValidationMessage = this.playniteApi.Resources.GetString("ErrorAccountIdNotUnique");
+                return;
+            }
+
+            if (duplicateName)
+            {
+                this.AddEditSteamAccountValidationMessage = this.playniteApi.Resources.GetString("ErrorAccountNameNotUnique");
+                return;
+            }
+
             this.IsTestingAccountCredentials = true;
 
             try
@@ -219,7 +274,7 @@ namespace PlayniteMultiAccountSteamLibrary.Extension
                 if (!testResult.Success)
                 {
                     this.logger.Warn($"Failed to validate Steam account: {testResult.ErrorMessage}");
-                    this.AccountValidationErrorMessage = $"Failed to validate Steam account: {testResult.ErrorMessage}";
+                    this.AddEditSteamAccountValidationMessage = $"Failed to validate Steam account: {testResult.ErrorMessage}";
                 }
                 else
                 {
@@ -284,7 +339,7 @@ namespace PlayniteMultiAccountSteamLibrary.Extension
 
             var isNewVersionAvailable = service.IsNewerVersion(this.RemoteSwitcherToolVersion, this.LocalSwitcherToolVersion);
             this.logger.Debug($"Switcher Tool local version: {this.LocalSwitcherToolVersion}, remote version: {this.RemoteSwitcherToolVersion}, new version available: {isNewVersionAvailable}");
-            
+
             UpdateInstallButtonText(isNewVersionAvailable);
             this.IsSwitcherToolInstallButtonEnabled = true;
         }
@@ -321,7 +376,7 @@ namespace PlayniteMultiAccountSteamLibrary.Extension
         private async void InstallSwitcherTool()
         {
             this.logger.Debug("User requested to install/update Switcher Tool");
-            
+
             this.isInstallingSwitcherTool = true;
             this.IsSwitcherToolInstallButtonEnabled = false;
             this.SwitcherToolInstallButtonTextKey = "SwitcherToolInstallButtonInstalling";
@@ -333,7 +388,7 @@ namespace PlayniteMultiAccountSteamLibrary.Extension
             {
                 await service.Install();
                 this.logger.Info("Switcher Tool installed successfully");
-                
+
                 this.settings.LauncherLocation = service.GetExecutablePath();
                 await UpdateSwitcherToolInfoAsync();
             }

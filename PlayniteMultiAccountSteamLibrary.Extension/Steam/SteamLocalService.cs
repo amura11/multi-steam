@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Text.RegularExpressions;
 using Gameloop.Vdf;
 using Gameloop.Vdf.Linq;
 using Microsoft.Win32;
@@ -87,10 +86,22 @@ namespace PlayniteMultiAccountSteamLibrary.Extension.Steam
 
                 if (loginFileLastWriteTime == null || loginFileLastWriteTime != loginFileWriteTime)
                 {
-                    var content = File.ReadAllText(loginUsersPath);
-                    var match = Regex.Match(content, @"""(\d{17})""\s*{\s*[^}]*?""MostRecent""\s*""1""", RegexOptions.Singleline);
+                    using var reader = new StreamReader(loginUsersPath);
+                    var vdf = VdfConvert.Deserialize(reader);
+                    var users = vdf.Value;
+                    string? mostRecentSteamId = null;
 
-                    activeSteamId = match.Success ? match.Groups[1].Value : null;
+                    foreach (var user in users.Children<VProperty>())
+                    {
+                        var mostRecent = user.Value["MostRecent"]?.ToString();
+                        if (mostRecent == "1")
+                        {
+                            mostRecentSteamId = user.Key;
+                            break;
+                        }
+                    }
+
+                    activeSteamId = mostRecentSteamId;
                     loginFileLastWriteTime = loginFileWriteTime;
                 }
 
