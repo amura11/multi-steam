@@ -16,7 +16,8 @@ namespace PlayniteMultiAccountSteamLibrary.Extension
 {
     public class SteamLibrarySettingsViewModel : ObservableObject, ISettings
     {
-        private readonly SteamLibraryPlugin plugin;
+        private readonly ISwitcherToolService switcherToolService;
+        private readonly ISteamLibraryPluginService pluginService;
         private readonly IPlayniteAPI playniteApi;
         private SteamLibrarySettingsModel? editingClone;
         private SteamLibrarySettingsModel settings = null!;
@@ -31,16 +32,21 @@ namespace PlayniteMultiAccountSteamLibrary.Extension
         private string? addEditSteamAccountValidationMessage;
         private bool isTestingAccountCredentials;
 
-        private readonly ILogger logger = LogManager.GetLogger();
+        private readonly ILogger logger;
 
-        public SteamLibrarySettingsViewModel(SteamLibraryPlugin plugin, IPlayniteAPI playniteApi)
+        public SteamLibrarySettingsViewModel(ISteamLibraryPluginService pluginService, IPlayniteAPI playniteApi)
+            : this(pluginService, playniteApi, LogManager.GetLogger(), new SwitcherToolService(pluginService.GetPluginUserDataPath())) { }
+
+        public SteamLibrarySettingsViewModel(ISteamLibraryPluginService pluginService, IPlayniteAPI playniteApi, ILogger logger, ISwitcherToolService switcherToolService)
         {
             // Injecting your plugin instance is required for Save/Load method because Playnite saves data to a location based on what plugin requested the operation.
-            this.plugin = plugin;
+            this.pluginService = pluginService;
             this.playniteApi = playniteApi;
+            this.logger = logger;
+            this.switcherToolService = switcherToolService;
 
             // Load saved settings.
-            var savedSettings = plugin.LoadPluginSettings<SteamLibrarySettingsModel>();
+            var savedSettings = this.pluginService.LoadPluginSettings();
 
             // LoadPluginSettings returns null if no saved data is available.
             this.Settings = savedSettings ?? new SteamLibrarySettingsModel();
@@ -150,7 +156,7 @@ namespace PlayniteMultiAccountSteamLibrary.Extension
 
         public void EndEdit()
         {
-            this.plugin.SavePluginSettings(this.Settings);
+            this.pluginService.SavePluginSettings(this.Settings);
         }
 
         public bool VerifySettings(out List<string> errors)
@@ -223,21 +229,25 @@ namespace PlayniteMultiAccountSteamLibrary.Extension
 
         private bool CanCompleteAddEditSteamAccount()
         {
-            return this.IsTestingAccountCredentials == false;
+            return this.IsTestingAccountCredentials == false
+                   && this.editingAccount != null
+                   && string.IsNullOrEmpty(this.editingAccount.Name) == false
+                   && string.IsNullOrEmpty(this.editingAccount.Id) == false
+                   && string.IsNullOrEmpty(this.editingAccount.Key) == false;
         }
 
         private async void CompleteAddEditSteamAccount()
         {
             this.logger.Debug("User requested to save Steam account");
-            
+
             this.AddEditSteamAccountValidationMessage = null;
-            
+
             if (this.editingAccount == null)
             {
                 this.logger.Error("CompleteEditSteamAccount called with null editingAccount");
                 throw new ArgumentException();
             }
-            
+
             // Additional validation: required fields
             if (string.IsNullOrWhiteSpace(this.editingAccount.Id) || string.IsNullOrWhiteSpace(this.editingAccount.Name) || string.IsNullOrWhiteSpace(this.editingAccount.Key))
             {
@@ -328,16 +338,15 @@ namespace PlayniteMultiAccountSteamLibrary.Extension
                 return;
             }
 
-            var service = new SwitcherToolService(this.plugin.GetPluginUserDataPath());
-            this.LocalSwitcherToolVersion = service.GetLocalVersion();
-            this.RemoteSwitcherToolVersion = await service.GetRemoteVersion();
+            this.LocalSwitcherToolVersion = this.switcherToolService.GetLocalVersion();
+            this.RemoteSwitcherToolVersion = await this.switcherToolService.GetRemoteVersion();
 
             if (string.IsNullOrEmpty(this.localSwitcherToolVersion) == false)
             {
-                this.settings.LauncherLocation = service.GetExecutablePath();
+                this.settings.LauncherLocation = this.switcherToolService.GetExecutablePath();
             }
 
-            var isNewVersionAvailable = service.IsNewerVersion(this.RemoteSwitcherToolVersion, this.LocalSwitcherToolVersion);
+            var isNewVersionAvailable = this.switcherToolService.IsNewerVersion(this.RemoteSwitcherToolVersion, this.LocalSwitcherToolVersion);
             this.logger.Debug($"Switcher Tool local version: {this.LocalSwitcherToolVersion}, remote version: {this.RemoteSwitcherToolVersion}, new version available: {isNewVersionAvailable}");
 
             UpdateInstallButtonText(isNewVersionAvailable);
@@ -382,21 +391,19 @@ namespace PlayniteMultiAccountSteamLibrary.Extension
             this.SwitcherToolInstallButtonTextKey = "SwitcherToolInstallButtonInstalling";
             this.InstallErrorMessage = null;
 
-            var service = new SwitcherToolService(this.plugin.GetPluginUserDataPath());
-
             try
             {
-                await service.Install();
+                await this.switcherToolService.Install();
                 this.logger.Info("Switcher Tool installed successfully");
 
-                this.settings.LauncherLocation = service.GetExecutablePath();
+                this.settings.LauncherLocation = this.switcherToolService.GetExecutablePath();
                 await UpdateSwitcherToolInfoAsync();
             }
             catch (Exception ex)
             {
                 this.logger.Error(ex, "Failed to install Switcher Tool");
                 this.InstallErrorMessage = ex.Message;
-                var isNewVersionAvailable = service.IsNewerVersion(this.RemoteSwitcherToolVersion, this.LocalSwitcherToolVersion);
+                var isNewVersionAvailable = this.switcherToolService.IsNewerVersion(this.RemoteSwitcherToolVersion, this.LocalSwitcherToolVersion);
 
                 UpdateInstallButtonText(isNewVersionAvailable);
             }

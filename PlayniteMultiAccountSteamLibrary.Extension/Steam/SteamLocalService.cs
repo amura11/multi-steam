@@ -9,20 +9,23 @@ using Playnite.SDK;
 
 namespace PlayniteMultiAccountSteamLibrary.Extension.Steam
 {
-    public class SteamLocalService
+    public class SteamLocalService : ISteamLocalService
     {
         private const string SteamExecutable = "steam.exe";
 
         private static string? steamInstallPath = null;
         private static DateTime? loginFileLastWriteTime = null;
         private static string? activeSteamId = null;
-        private static object lockObject = new object();
+        private static readonly object lockObject = new object();
 
         private readonly ILogger logger;
 
-        public SteamLocalService(ILogger? logger = null)
+        public SteamLocalService()
+            : this(LogManager.GetLogger()) { }
+
+        internal SteamLocalService(ILogger logger)
         {
-            this.logger = logger ?? LogManager.GetLogger();
+            this.logger = logger;
         }
 
         private string SteamInstallPath
@@ -116,7 +119,7 @@ namespace PlayniteMultiAccountSteamLibrary.Extension.Steam
             return Run(arguments);
         }
 
-        public bool InstallGAme(string gameId)
+        public bool InstallGame(string gameId)
         {
             var arguments = $"steam://install/{gameId}";
 

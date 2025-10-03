@@ -3,20 +3,26 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Text;
+using Playnite.SDK;
 using Playnite.SDK.Data;
 
 namespace PlayniteMultiAccountSteamLibrary.Extension.Steam
 {
-    public class SteamApiService
+    public class SteamApiService : ISteamApiService
     {
         private const string SteamApiBaseUrl = "https://api.steampowered.com";
         private readonly string apiKey;
         private readonly string steamId;
+        private readonly ILogger logger;
 
         public SteamApiService(string steamId, string apiKey)
+            : this(steamId, apiKey, LogManager.GetLogger()) { }
+
+        internal SteamApiService(string steamId, string apiKey, ILogger logger)
         {
             this.apiKey = apiKey ?? throw new ArgumentNullException(nameof(apiKey));
             this.steamId = steamId ?? throw new ArgumentNullException(nameof(steamId));
+            this.logger = logger;
         }
 
         public List<OwnedSteamGame> GetOwnedGames(bool includeAppInfo = true, bool includePlayedFreeGames = true)

@@ -13,17 +13,22 @@ namespace PlayniteMultiAccountSteamLibrary.Extension.Plugin;
 public class SteamPlayController : PlayController
 {
     private readonly ILogger logger;
-    private readonly SteamLibrarySettingsModel settings;
-    private readonly SteamLocalService steamService;
+    private readonly ISteamLibrarySettingsModel settings;
+    private readonly ISteamLocalService steamService;
+    private readonly ISteamAccountSwitcher accountSwitcher;
+    private readonly IProcessWatcherFactory processWatcherFactory;
     private readonly CancellationTokenSource cancellationTokenSource;
-    private readonly SteamAccountSwitcher accountSwitcher;
 
-    public SteamPlayController(Game game, SteamLibrarySettingsModel settings, ILogger logger) : base(game)
+    public SteamPlayController(Game game, ISteamLibrarySettingsModel settings) :
+        this(game, settings, LogManager.GetLogger(), new SteamLocalService(), new SteamAccountSwitcher(settings), new ProcessWatcherFactory()) { }
+
+    internal SteamPlayController(Game game, ISteamLibrarySettingsModel settings, ILogger logger, ISteamLocalService steamService, ISteamAccountSwitcher accountSwitcher, IProcessWatcherFactory processWatcherFactory) : base(game)
     {
-        this.settings = settings;
         this.logger = logger;
-        this.steamService = new SteamLocalService();
-        this.accountSwitcher = new SteamAccountSwitcher(settings);
+        this.settings = settings;
+        this.steamService = steamService;
+        this.accountSwitcher = accountSwitcher;
+        this.processWatcherFactory = processWatcherFactory;
         this.cancellationTokenSource = new CancellationTokenSource();
     }
 
@@ -42,7 +47,7 @@ public class SteamPlayController : PlayController
         {
             throw new InvalidOperationException("Game is null");
         }
-        
+
         this.logger.Info($"Attempting to play game: {this.Game?.Name} (Id: {this.Game?.Id})");
 
         var steamId = this.Game!.GetSteamId();
@@ -85,7 +90,7 @@ public class SteamPlayController : PlayController
                 return;
             }
 
-            var processWatcher = new ProcessWatcher(installationDirectory, this.settings.PollingInterval, 2000, this.settings.LaunchTimeout);
+            var processWatcher = this.processWatcherFactory.Create(installationDirectory, this.settings.PollingInterval, 2000, this.settings.LaunchTimeout);
 
             var startedProcessId = await processWatcher.WaitForStartAsync(cancellationToken);
 

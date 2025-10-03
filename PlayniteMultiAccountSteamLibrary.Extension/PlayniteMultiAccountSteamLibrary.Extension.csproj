@@ -91,15 +91,27 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Extensions\GameExtensions.cs" />
+    <Compile Include="ISteamLibraryPluginService.cs" />
+    <Compile Include="Plugin\Infrastructure\IProcessWatcher.cs" />
+    <Compile Include="Plugin\Infrastructure\IProcessWatcherFactory.cs" />
+    <Compile Include="Plugin\Infrastructure\ProcessWatcher.cs" />
+    <Compile Include="Plugin\Infrastructure\ProcessWatcherFactory.cs" />
+    <Compile Include="Plugin\ISteamAccountSwitcher.cs" />
     <Compile Include="Plugin\SteamPlayController.cs" />
-    <Compile Include="Plugin\ProcessWatcher.cs" />
     <Compile Include="Plugin\SteamAccountSwitcher.cs" />
     <Compile Include="Settings\Infrastructure\ResourceKeyConverter.cs" />
     <Compile Include="Settings\Infrastructure\StringNullOrEmptyToVisibilityConverter.cs" />
+    <Compile Include="Settings\Models\ISteamLibrarySettingsModel.cs" />
+    <Compile Include="Steam\ISteamApiService.cs" />
+    <Compile Include="Steam\ISteamLocalService.cs" />
+    <Compile Include="Steam\ISteamService.cs" />
+    <Compile Include="Steam\ISteamServiceFactory.cs" />
     <Compile Include="Steam\Models\ApiTestResult.cs" />
     <Compile Include="Steam\Models\SteamGameMetadata.cs" />
     <Compile Include="Steam\SteamApiService.cs" />
     <Compile Include="Steam\SteamLocalService.cs" />
+    <Compile Include="Steam\SteamServiceFactory.cs" />
+    <Compile Include="SwitcherTool\ISwitcherToolService.cs" />
     <Compile Include="SwitcherTool\Models\ToolRelease.cs" />
     <Compile Include="SwitcherTool\Models\ToolReleaseAsset.cs" />
     <Compile Include="SwitcherTool\SwitcherToolService.cs" />

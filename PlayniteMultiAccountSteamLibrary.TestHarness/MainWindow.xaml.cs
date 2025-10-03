@@ -11,17 +11,17 @@ namespace PlayniteMultiAccountSteamLibrary.TestHarness
     public partial class MainWindow
     {
         private readonly MockPlayniteApi mockPlayniteApi;
-        private readonly SteamLibraryPlugin libraryPlugin;
+        private readonly SteamLibraryPlugin libraryPluginService;
 
         public MainWindow()
         {
             this.mockPlayniteApi = new MockPlayniteApi();
-            this.libraryPlugin = new SteamLibraryPlugin(this.mockPlayniteApi);
+            this.libraryPluginService = new SteamLibraryPlugin(this.mockPlayniteApi);
 
             InitializeComponent();
 
-            var settingsViewModel = (SteamLibrarySettingsViewModel)this.libraryPlugin.GetSettings(true);
-            var settingsView = (SteamLibrarySettingsView)this.libraryPlugin.GetSettingsView(true);
+            var settingsViewModel = (SteamLibrarySettingsViewModel)this.libraryPluginService.GetSettings(true);
+            var settingsView = (SteamLibrarySettingsView)this.libraryPluginService.GetSettingsView(true);
 
             settingsView.DataContext = settingsViewModel;
 
@@ -32,7 +32,7 @@ namespace PlayniteMultiAccountSteamLibrary.TestHarness
         {
             var arguments = new LibraryGetGamesArgs();
 
-            var results = this.libraryPlugin.GetGames(arguments);
+            var results = this.libraryPluginService.GetGames(arguments);
         }
     }
 }

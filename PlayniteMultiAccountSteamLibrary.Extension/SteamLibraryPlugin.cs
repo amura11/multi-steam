@@ -12,19 +12,26 @@ using PlayniteMultiAccountSteamLibrary.Extension.Steam;
 
 namespace PlayniteMultiAccountSteamLibrary.Extension
 {
-    public class SteamLibraryPlugin : LibraryPlugin
+    public class SteamLibraryPlugin : LibraryPlugin, ISteamLibraryPluginService
     {
-        private static readonly ILogger logger = LogManager.GetLogger();
+        private readonly ILogger logger = LogManager.GetLogger();
         private readonly SteamLibrarySettingsViewModel settingsViewModel;
+        private readonly ISteamServiceFactory steamServiceFactory;
 
-        public SteamLibraryPlugin(IPlayniteAPI api) : base(api)
+        public SteamLibraryPlugin(IPlayniteAPI api)
+            : this(LogManager.GetLogger(), api, new SteamServiceFactory())
         {
-            this.settingsViewModel = new SteamLibrarySettingsViewModel(this, api);
-
             this.Properties = new LibraryPluginProperties()
             {
                 HasSettings = true
             };
+        }
+
+        internal SteamLibraryPlugin(ILogger logger, IPlayniteAPI api, ISteamServiceFactory steamServiceFactory) : base(api)
+        {
+            this.logger = logger;
+            this.steamServiceFactory = steamServiceFactory;
+            this.settingsViewModel = new SteamLibrarySettingsViewModel(this, api);
         }
 
         public override Guid Id => Guid.Parse("eb07dae3-4021-4734-abb6-e8a121894d48");
@@ -34,7 +41,7 @@ namespace PlayniteMultiAccountSteamLibrary.Extension
         public override LibraryClient Client { get; } = new SteamLibraryClient();
 
         private SteamLibrarySettingsModel Settings => this.settingsViewModel.Settings;
-        
+
         public override IEnumerable<GameMetadata> GetGames(LibraryGetGamesArgs args)
         {
             var allGameMetadata = this.Settings.SteamAccountSettings.SelectMany(x => ProcessSteamAccountGames(x))
@@ -53,7 +60,7 @@ namespace PlayniteMultiAccountSteamLibrary.Extension
                 yield break;
             }
 
-            yield return new SteamPlayController(args.Game, this.Settings, LogManager.GetLogger(nameof(SteamPlayController)));
+            yield return new SteamPlayController(args.Game, this.Settings);
         }
 
         public override ISettings GetSettings(bool firstRunSettings)
@@ -70,7 +77,7 @@ namespace PlayniteMultiAccountSteamLibrary.Extension
         {
             logger.Debug($"Processing games for {accountSettings.Name}({accountSettings.Id})");
 
-            var steamService = new SteamService(accountSettings.Name, accountSettings.Id, accountSettings.Key);
+            var steamService = this.steamServiceFactory.Create(accountSettings.Name, accountSettings.Id, accountSettings.Key);
             var games = steamService.GetGames();
 
             logger.Debug($"Processed {games.Count} games from {accountSettings.Name}({accountSettings.Id})'s library");
@@ -97,6 +104,16 @@ namespace PlayniteMultiAccountSteamLibrary.Extension
                     new MetadataNameProperty(steamGameMetadata.OwnerId)
                 }
             };
+        }
+
+        public SteamLibrarySettingsModel? LoadPluginSettings()
+        {
+            return base.LoadPluginSettings<SteamLibrarySettingsModel>();
+        }
+
+        public void SavePluginSettings(SteamLibrarySettingsModel settings)
+        {
+            base.SavePluginSettings(settings);
         }
     }
 }

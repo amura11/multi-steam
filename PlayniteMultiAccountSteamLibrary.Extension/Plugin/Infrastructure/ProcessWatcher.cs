@@ -9,7 +9,7 @@ using Playnite.SDK;
 
 namespace PlayniteMultiAccountSteamLibrary.Extension.Plugin;
 
-public class ProcessWatcher
+public class ProcessWatcher : IProcessWatcher
 {
     private readonly string targetDirectory;
     private readonly int pollingInterval;
@@ -20,7 +20,7 @@ public class ProcessWatcher
     public ProcessWatcher(string targetDirectory, int pollingInterval, int stabilizationInterval, int startTimeout)
         : this(LogManager.GetLogger(), targetDirectory, pollingInterval, stabilizationInterval, startTimeout) { }
 
-    public ProcessWatcher(ILogger logger, string targetDirectory, int pollingInterval, int stabilizationInterval, int startTimeout)
+    internal ProcessWatcher(ILogger logger, string targetDirectory, int pollingInterval, int stabilizationInterval, int startTimeout)
     {
         this.logger = logger;
         this.targetDirectory = NormalizedPath(targetDirectory);

@@ -7,17 +7,20 @@ using PlayniteMultiAccountSteamLibrary.Extension.Steam;
 
 namespace PlayniteMultiAccountSteamLibrary.Extension.Plugin;
 
-public class SteamAccountSwitcher
+public class SteamAccountSwitcher : ISteamAccountSwitcher
 {
     private readonly ILogger logger;
-    private readonly SteamLibrarySettingsModel settings;
-    private readonly SteamLocalService steamService;
+    private readonly ISteamLibrarySettingsModel settings;
+    private readonly ISteamLocalService steamService;
 
-    public SteamAccountSwitcher(SteamLibrarySettingsModel settings, ILogger? logger = null, SteamLocalService? steamService = null)
+    public SteamAccountSwitcher(ISteamLibrarySettingsModel settings)
+        : this(settings, LogManager.GetLogger(), new SteamLocalService()) { }
+
+    internal SteamAccountSwitcher(ISteamLibrarySettingsModel settings, ILogger logger, ISteamLocalService steamService)
     {
         this.settings = settings;
-        this.logger = logger ?? LogManager.GetLogger();
-        this.steamService = steamService ?? new SteamLocalService();
+        this.logger = logger;
+        this.steamService = steamService;
     }
 
     public async Task<bool> SwitchToAccount(string steamId, CancellationToken cancellationToken)
@@ -107,8 +110,7 @@ public class SteamAccountSwitcher
 
         return isRunning;
     }
-    
-    
+
     private async Task WaitForProcessExitAsync(Process process, CancellationToken cancellationToken)
     {
         await Task.Run(() =>
