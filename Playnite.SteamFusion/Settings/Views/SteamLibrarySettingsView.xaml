@@ -1,0 +1,248 @@
+﻿<UserControl
+    d:DataContext="{d:DesignInstance Type=local:SteamLibrarySettingsViewModel, IsDesignTimeCreatable=True}"
+    d:DesignHeight="600"
+    d:DesignWidth="800"
+    mc:Ignorable="d"
+    x:Class="Playnite.SteamFusion.SteamLibrarySettingsView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:infra="clr-namespace:Playnite.SteamFusion.Infrastructure"
+    xmlns:local="clr-namespace:Playnite.SteamFusion"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <Style
+                BasedOn="{StaticResource BaseTextBlockStyle}"
+                TargetType="TextBlock"
+                x:Key="HeaderTextBlock">
+                <Setter Property="FontSize" Value="{DynamicResource FontSizeLarger}" />
+                <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="Margin" Value="0,0,0,10" />
+            </Style>
+
+            <Thickness x:Key="ControlBottomMargin">
+                0,0,0,5
+            </Thickness>
+            <Thickness x:Key="ControlMargin">
+                5,5,5,5
+            </Thickness>
+
+            <infra:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+            <infra:EnumToVisibilityConverter x:Key="EnumToVisibilityConverter" />
+            <infra:ResourceKeyConverter x:Key="ResourceKeyConverter" />
+            <infra:StringNullOrEmptyToVisibilityConverter x:Key="StringNullOrEmptyToVisibilityConverter" />
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid Background="{DynamicResource WindowBackgourndBrush}">
+        <StackPanel>
+            <StackPanel Margin="20">
+                <TextBlock Style="{DynamicResource HeaderTextBlock}" Text="{DynamicResource HeaderSwitcherToolSettings}" />
+
+                <ComboBox
+                    ItemsSource="{infra:EnumValues {x:Type local:SwitcherToolInstallationType}}"
+                    Margin="{StaticResource ControlBottomMargin}"
+                    SelectedItem="{Binding Settings.SwitcherToolInstallationType}" />
+
+                <!--  Manual Mode  -->
+                <StackPanel
+                    Margin="0,0,0,10"
+                    Orientation="Horizontal"
+                    VerticalAlignment="Center"
+                    Visibility="{Binding Settings.SwitcherToolInstallationType, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=Manual}">
+                    <TextBox
+                        IsReadOnly="True"
+                        Margin="0,0,8,0"
+                        MinWidth="220"
+                        Text="{Binding Settings.LauncherLocation}"
+                        VerticalAlignment="Center" />
+                    <Button
+                        Command="{Binding BrowseForSwitcherToolCommand}"
+                        Content="{DynamicResource ButtonBrowse}"
+                        MinWidth="90"
+                        VerticalAlignment="Center" />
+                </StackPanel>
+
+                <!--  Automatic Mode  -->
+                <Border
+                    Background="{DynamicResource GridItemBackgroundBrush}"
+                    CornerRadius="4"
+                    Margin="0,0,0,10"
+                    Padding="10"
+                    Visibility="{Binding Settings.SwitcherToolInstallationType, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=Automatic}">
+                    <StackPanel Orientation="Vertical">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel
+                                Grid.Column="0"
+                                Orientation="Vertical"
+                                VerticalAlignment="Center">
+                                <StackPanel Margin="0,0,0,2" Orientation="Horizontal">
+                                    <TextBlock
+                                        FontWeight="SemiBold"
+                                        Margin="0,0,4,0"
+                                        Text="{DynamicResource LabelSwitcherToolLocalVersion}" />
+                                    <TextBlock Text="{Binding LocalSwitcherToolVersion}" />
+                                </StackPanel>
+                                <StackPanel Margin="0,0,0,2" Orientation="Horizontal">
+                                    <TextBlock
+                                        FontWeight="SemiBold"
+                                        Margin="0,0,4,0"
+                                        Text="{DynamicResource LabelSwitcherToolRemoteVersion}" />
+                                    <TextBlock Text="{Binding RemoteSwitcherToolVersion}" />
+                                </StackPanel>
+                            </StackPanel>
+                            <Button
+                                Command="{Binding InstallSwitcherToolCommand}"
+                                Grid.Column="1"
+                                Height="32"
+                                IsEnabled="{Binding IsSwitcherToolInstallButtonEnabled}"
+                                Margin="16,0,0,0"
+                                MinWidth="110"
+                                VerticalAlignment="Center">
+                                <TextBlock Text="{Binding SwitcherToolInstallButtonTextKey, Converter={StaticResource ResourceKeyConverter}}" />
+                            </Button>
+                        </Grid>
+                        <TextBlock
+                            Foreground="{DynamicResource WarningBrush}"
+                            Margin="0,8,0,0"
+                            Text="{Binding InstallErrorMessage}"
+                            Visibility="{Binding InstallErrorMessage, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+            <StackPanel Margin="20">
+                <TextBlock Style="{DynamicResource HeaderTextBlock}" Text="{DynamicResource HeaderSteamAccounts}" />
+
+                <ItemsControl ItemsSource="{Binding Settings.SteamAccountSettings}" Margin="{StaticResource ControlBottomMargin}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="{DynamicResource GridItemBackgroundBrush}">
+                                <Grid Margin="{StaticResource ControlMargin}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="2*" />
+                                        <!--  Name + ID  -->
+                                        <ColumnDefinition Width="3*" />
+                                        <!--  API Key  -->
+                                        <ColumnDefinition Width="Auto" />
+                                        <!--  Buttons  -->
+                                    </Grid.ColumnDefinitions>
+
+                                    <!--  Left: Name & ID  -->
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock FontWeight="Bold" Text="{Binding Name}" />
+                                        <TextBlock
+                                            FontSize="{DynamicResource FontSizeSmall}"
+                                            Foreground="{DynamicResource TextBrushDarker}"
+                                            Text="{Binding Id}" />
+                                    </StackPanel>
+
+                                    <!--  Middle: API Key  -->
+                                    <TextBlock
+                                        FontFamily="Consolas"
+                                        Grid.Column="1"
+                                        Margin="10,0"
+                                        Text="{Binding Key}"
+                                        TextTrimming="CharacterEllipsis"
+                                        VerticalAlignment="Center" />
+
+                                    <!--  Right: Buttons  -->
+                                    <StackPanel
+                                        Grid.Column="2"
+                                        HorizontalAlignment="Right"
+                                        Margin="10,0,0,0"
+                                        Orientation="Horizontal"
+                                        VerticalAlignment="Center">
+                                        <Button
+                                            Command="{Binding DataContext.EditSteamAccountCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"
+                                            Content="{DynamicResource ButtonEdit}"
+                                            Margin="0,0,8,0"
+                                            Width="Auto"
+                                            MinWidth="60" />
+
+                                        <Button
+                                            Command="{Binding DataContext.DeleteSteamAccountCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"
+                                            Content="{DynamicResource ButtonDelete}"
+                                            Width="Auto"
+                                            MinWidth="60" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <Button Command="{Binding AddSteamAccountCommand}" Content="{DynamicResource ButtonAddAccount}" />
+            </StackPanel>
+        </StackPanel>
+
+        <Grid
+            Background="#AA000000"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Visibility="{Binding IsAccountEditorVisible, Converter={StaticResource BoolToVisibilityConverter}}"
+            d:IsHidden="True">
+
+            <Border
+                Background="{DynamicResource PopupBackgroundBrush}"
+                BorderBrush="{DynamicResource PopupBorderBrush}"
+                BorderThickness="{DynamicResource PopupBorderThickness}"
+                HorizontalAlignment="Center"
+                Padding="20"
+                VerticalAlignment="Center"
+                Width="500">
+                <StackPanel>
+                    <TextBlock Style="{DynamicResource HeaderTextBlock}" Text="{DynamicResource HeaderEditAccount}" />
+
+                    <TextBlock Text="{DynamicResource LabelAccountName}" />
+                    <TextBox Margin="0,0,0,5" Text="{Binding EditingAccount.Name, FallbackValue='Name'}" />
+                    <TextBlock Text="{DynamicResource LabelSteamId}" />
+                    <TextBox Margin="0,0,0,5" Text="{Binding EditingAccount.Id, FallbackValue='Steam ID'}" />
+                    <TextBlock Text="{DynamicResource LabelSteamApiKey}" />
+                    <TextBox Margin="0,0,0,10" Text="{Binding EditingAccount.Key, FallbackValue='API Key'}" />
+
+                    <TextBlock
+                        Foreground="{DynamicResource WarningBrush}"
+                        Margin="0,0,0,10"
+                        Text="{Binding AddEditSteamAccountValidationMessage}"
+                        Visibility="{Binding AddEditSteamAccountValidationMessage, Converter={StaticResource StringNullOrEmptyToVisibilityConverter}}"
+                        TextWrapping="Wrap" />
+                    <StackPanel
+                        Margin="0,0,0,10"
+                        Orientation="Horizontal"
+                        VerticalAlignment="Center">
+                        <ProgressBar
+                            Height="8"
+                            IsIndeterminate="True"
+                            Margin="0,0,8,0"
+                            Visibility="{Binding IsTestingAccountCredentials, Converter={StaticResource BoolToVisibilityConverter}}"
+                            Width="100" />
+                        <TextBlock
+                            Text="{DynamicResource LabelTestingCredentials}"
+                            VerticalAlignment="Center"
+                            Visibility="{Binding IsTestingAccountCredentials, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    </StackPanel>
+
+                    <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                        <Button
+                            Command="{Binding CompleteEditSteamAccountCommand}"
+                            Content="{DynamicResource ButtonSave}"
+                            Margin="0,0,10,0"
+                            Width="80" />
+                        <Button
+                            Command="{Binding CancelEditSteamAccountCommand}"
+                            Content="{DynamicResource ButtonCancel}"
+                            Width="80" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>
