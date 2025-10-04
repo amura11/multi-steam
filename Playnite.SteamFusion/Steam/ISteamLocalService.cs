@@ -12,7 +12,7 @@ public interface ISteamLocalService
 
     bool InstallGame(string gameId);
 
-    bool IsGameInstalled(string gameId);
+    bool UninstallGame(string gameId);
 
     InstalledSteamGame? GetInstallInformation(string applicationId);
 }

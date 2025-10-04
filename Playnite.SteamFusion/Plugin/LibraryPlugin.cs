@@ -65,6 +65,16 @@ namespace Playnite.SteamFusion.Plugin
             yield return new InstallController(args.Game, this.Settings);
         }
 
+        public override IEnumerable<SDK.Plugins.UninstallController> GetUninstallActions(GetUninstallActionsArgs args)
+        {
+            if (args.Game.PluginId != this.Id)
+            {
+                yield break;
+            }
+
+            yield return new UninstallController(args.Game, this.Settings);
+        }
+
         public override IEnumerable<SDK.Plugins.PlayController> GetPlayActions(GetPlayActionsArgs args)
         {
             if (args.Game.PluginId != this.Id)

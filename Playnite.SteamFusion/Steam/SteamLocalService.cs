@@ -13,15 +13,12 @@ namespace Playnite.SteamFusion.Steam
     public class SteamLocalService : ISteamLocalService
     {
         private const string SteamExecutable = "steam.exe";
-
+        private static readonly object LockObject = new object();
         private static string? steamInstallPath = null;
         private static DateTime? loginFileLastWriteTime = null;
         private static string? activeSteamId = null;
-        private static readonly object lockObject = new object();
-
         private static List<InstalledSteamGame>? cachedGames = null;
         private static DateTime? lastMaxWriteTime = null;
-
         private readonly ILogger logger;
 
         public SteamLocalService()
@@ -119,7 +116,7 @@ namespace Playnite.SteamFusion.Steam
                 return null;
             }
 
-            lock (lockObject)
+            lock (LockObject)
             {
                 var loginFileWriteTime = File.GetLastWriteTimeUtc(loginUsersPath);
 
@@ -162,18 +159,11 @@ namespace Playnite.SteamFusion.Steam
             return Run(arguments);
         }
 
-        public bool IsGameInstalled(string gameId)
+        public bool UninstallGame(string gameId)
         {
-            var found = false;
-
-            if (int.TryParse(gameId, out var id))
-            {
-                var installedGames = GetInstalledGames();
-
-                found = installedGames.Any(x => x.Id == id);
-            }
-
-            return found;
+            var arguments = $"steam://uninstall/{gameId}";
+            
+            return Run(arguments);
         }
 
         private bool Run(string arguments)

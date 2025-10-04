@@ -99,6 +99,7 @@
     <Compile Include="Extensions\GameExtensions.cs" />
     <Compile Include="Plugin\Controller\InstallController.cs" />
     <Compile Include="Plugin\Controller\PlayController.cs" />
+    <Compile Include="Plugin\Controller\UninstallController.cs" />
     <Compile Include="Plugin\Infrastructure\ILibraryPluginService.cs" />
     <Compile Include="Plugin\LibraryClient.cs" />
     <Compile Include="Plugin\LibraryPlugin.cs" />

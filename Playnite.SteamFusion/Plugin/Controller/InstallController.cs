@@ -115,14 +115,14 @@ public class InstallController : PlayniteInstallController
 
     private async Task<InstalledSteamGame?> MonitorInstallation(string applicationId, CancellationToken cancellationToken)
     {
-        var pollingInterval = TimeSpan.FromSeconds(this.settings.PollingInterval);
+        var pollingInterval = TimeSpan.FromMilliseconds(this.settings.PollingInterval * 10);
         InstalledSteamGame? installInformation = null;
 
         while (cancellationToken.IsCancellationRequested == false && installInformation == null)
         {
-            installInformation = this.steamService.GetInstallInformation(applicationId);
-
             await Task.Delay(pollingInterval, cancellationToken);
+
+            installInformation = this.steamService.GetInstallInformation(applicationId);
         }
 
         return installInformation;
