@@ -10,13 +10,13 @@ namespace PlayniteMultiAccountSteamLibrary.Extension.Plugin;
 public class SteamAccountSwitcher : ISteamAccountSwitcher
 {
     private readonly ILogger logger;
-    private readonly ISteamLibrarySettingsModel settings;
+    private readonly SteamLibrarySettingsModel settings;
     private readonly ISteamLocalService steamService;
 
-    public SteamAccountSwitcher(ISteamLibrarySettingsModel settings)
+    public SteamAccountSwitcher(SteamLibrarySettingsModel settings)
         : this(settings, LogManager.GetLogger(), new SteamLocalService()) { }
 
-    internal SteamAccountSwitcher(ISteamLibrarySettingsModel settings, ILogger logger, ISteamLocalService steamService)
+    internal SteamAccountSwitcher(SteamLibrarySettingsModel settings, ILogger logger, ISteamLocalService steamService)
     {
         this.settings = settings;
         this.logger = logger;

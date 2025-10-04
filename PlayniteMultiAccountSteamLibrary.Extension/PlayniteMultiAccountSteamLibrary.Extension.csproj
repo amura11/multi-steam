@@ -101,7 +101,6 @@
     <Compile Include="Plugin\SteamAccountSwitcher.cs" />
     <Compile Include="Settings\Infrastructure\ResourceKeyConverter.cs" />
     <Compile Include="Settings\Infrastructure\StringNullOrEmptyToVisibilityConverter.cs" />
-    <Compile Include="Settings\Models\ISteamLibrarySettingsModel.cs" />
     <Compile Include="Steam\ISteamApiService.cs" />
     <Compile Include="Steam\ISteamLocalService.cs" />
     <Compile Include="Steam\ISteamService.cs" />

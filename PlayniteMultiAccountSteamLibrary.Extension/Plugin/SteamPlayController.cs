@@ -13,16 +13,16 @@ namespace PlayniteMultiAccountSteamLibrary.Extension.Plugin;
 public class SteamPlayController : PlayController
 {
     private readonly ILogger logger;
-    private readonly ISteamLibrarySettingsModel settings;
+    private readonly SteamLibrarySettingsModel settings;
     private readonly ISteamLocalService steamService;
     private readonly ISteamAccountSwitcher accountSwitcher;
     private readonly IProcessWatcherFactory processWatcherFactory;
     private readonly CancellationTokenSource cancellationTokenSource;
 
-    public SteamPlayController(Game game, ISteamLibrarySettingsModel settings) :
+    public SteamPlayController(Game game, SteamLibrarySettingsModel settings) :
         this(game, settings, LogManager.GetLogger(), new SteamLocalService(), new SteamAccountSwitcher(settings), new ProcessWatcherFactory()) { }
 
-    internal SteamPlayController(Game game, ISteamLibrarySettingsModel settings, ILogger logger, ISteamLocalService steamService, ISteamAccountSwitcher accountSwitcher, IProcessWatcherFactory processWatcherFactory) : base(game)
+    internal SteamPlayController(Game game, SteamLibrarySettingsModel settings, ILogger logger, ISteamLocalService steamService, ISteamAccountSwitcher accountSwitcher, IProcessWatcherFactory processWatcherFactory) : base(game)
     {
         this.logger = logger;
         this.settings = settings;

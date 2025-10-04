@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace PlayniteMultiAccountSteamLibrary.Extension
 {
-    public class SteamLibrarySettingsModel : ObservableObject, ISteamLibrarySettingsModel
+    public class SteamLibrarySettingsModel : ObservableObject
     {
         private ObservableCollection<SteamAccountSettingsModel> steamAccountSettings = new ObservableCollection<SteamAccountSettingsModel>();
         private SwitcherToolInstallationType switcherToolInstallationType = SwitcherToolInstallationType.Manual;
