@@ -1,24 +1,26 @@
-﻿using Playnite.SDK;
-using Playnite.SDK.Models;
-using Playnite.SDK.Plugins;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Controls;
-using Playnite.SteamFusion.Plugin;
+using Playnite.SDK;
+using Playnite.SDK.Models;
+using Playnite.SDK.Plugins;
 using Playnite.SteamFusion.Steam;
+
+using PlayniteLibraryPlugin = Playnite.SDK.Plugins.LibraryPlugin;
+
 
 // ReSharper disable ConvertClosureToMethodGroup
 
-namespace Playnite.SteamFusion
+namespace Playnite.SteamFusion.Plugin
 {
-    public class SteamLibraryPlugin : LibraryPlugin, ISteamLibraryPluginService
+    public class LibraryPlugin : PlayniteLibraryPlugin, ILibraryPluginService
     {
         private readonly ILogger logger;
         private readonly SteamLibrarySettingsViewModel settingsViewModel;
         private readonly ISteamServiceFactory steamServiceFactory;
 
-        public SteamLibraryPlugin(IPlayniteAPI api)
+        public LibraryPlugin(IPlayniteAPI api)
             : this(LogManager.GetLogger(), api, new SteamServiceFactory())
         {
             this.Properties = new LibraryPluginProperties()
@@ -27,7 +29,7 @@ namespace Playnite.SteamFusion
             };
         }
 
-        internal SteamLibraryPlugin(ILogger logger, IPlayniteAPI api, ISteamServiceFactory steamServiceFactory) : base(api)
+        internal LibraryPlugin(ILogger logger, IPlayniteAPI api, ISteamServiceFactory steamServiceFactory) : base(api)
         {
             this.logger = logger;
             this.steamServiceFactory = steamServiceFactory;
@@ -36,9 +38,9 @@ namespace Playnite.SteamFusion
 
         public override Guid Id => Guid.Parse("eb07dae3-4021-4734-abb6-e8a121894d48");
 
-        public override string Name => "Multi Account Steam Library";
+        public override string Name => "Steam Fusion";
 
-        public override LibraryClient Client { get; } = new SteamLibraryClient();
+        public override SDK.LibraryClient Client { get; } = new LibraryClient();
 
         private SteamLibrarySettingsModel Settings => this.settingsViewModel.Settings;
 
@@ -53,14 +55,24 @@ namespace Playnite.SteamFusion
             return toReturn;
         }
 
-        public override IEnumerable<PlayController> GetPlayActions(GetPlayActionsArgs args)
+        public override IEnumerable<SDK.Plugins.InstallController> GetInstallActions(GetInstallActionsArgs args)
         {
             if (args.Game.PluginId != this.Id)
             {
                 yield break;
             }
 
-            yield return new SteamPlayController(args.Game, this.Settings);
+            yield return new InstallController(args.Game, this.Settings);
+        }
+
+        public override IEnumerable<SDK.Plugins.PlayController> GetPlayActions(GetPlayActionsArgs args)
+        {
+            if (args.Game.PluginId != this.Id)
+            {
+                yield break;
+            }
+
+            yield return new PlayController(args.Game, this.Settings);
         }
 
         public override ISettings GetSettings(bool firstRunSettings)
@@ -75,12 +87,12 @@ namespace Playnite.SteamFusion
 
         private List<SteamGameMetadata> ProcessSteamAccountGames(SteamAccountSettingsModel accountSettings)
         {
-            logger.Debug($"Processing games for {accountSettings.Name}({accountSettings.Id})");
+            this.logger.Debug($"Processing games for {accountSettings.Name}({accountSettings.Id})");
 
             var steamService = this.steamServiceFactory.Create(accountSettings.Name, accountSettings.Id, accountSettings.Key);
             var games = steamService.GetGames();
 
-            logger.Debug($"Processed {games.Count} games from {accountSettings.Name}({accountSettings.Id})'s library");
+            this.logger.Debug($"Processed {games.Count} games from {accountSettings.Name}({accountSettings.Id})'s library");
 
             return games;
         }

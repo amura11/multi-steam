@@ -1,8 +1,10 @@
 ﻿using System;
 
-namespace Playnite.SteamFusion
+using PlayniteLibraryClient = Playnite.SDK.LibraryClient;
+
+namespace Playnite.SteamFusion.Plugin
 {
-    public class SteamLibraryClient : Playnite.SDK.LibraryClient
+    public class LibraryClient : PlayniteLibraryClient
     {
         public override bool IsInstalled => true;
 

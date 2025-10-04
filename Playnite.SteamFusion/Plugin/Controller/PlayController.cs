@@ -5,12 +5,16 @@ using System.Threading.Tasks;
 using Playnite.SDK;
 using Playnite.SDK.Models;
 using Playnite.SDK.Plugins;
+using Playnite.SteamFusion.AccountSwitcher;
 using Playnite.SteamFusion.Steam;
 using Playnite.SteamFusion.Extensions;
 
+using PlaynitePlayController = Playnite.SDK.Plugins.PlayController;
+
+
 namespace Playnite.SteamFusion.Plugin;
 
-public class SteamPlayController : PlayController
+public class PlayController : PlaynitePlayController
 {
     private readonly ILogger logger;
     private readonly SteamLibrarySettingsModel settings;
@@ -19,10 +23,10 @@ public class SteamPlayController : PlayController
     private readonly IProcessWatcherFactory processWatcherFactory;
     private readonly CancellationTokenSource cancellationTokenSource;
 
-    public SteamPlayController(Game game, SteamLibrarySettingsModel settings) :
+    public PlayController(Game game, SteamLibrarySettingsModel settings) :
         this(game, settings, LogManager.GetLogger(), new SteamLocalService(), new SteamAccountSwitcher(settings), new ProcessWatcherFactory()) { }
 
-    internal SteamPlayController(Game game, SteamLibrarySettingsModel settings, ILogger logger, ISteamLocalService steamService, ISteamAccountSwitcher accountSwitcher, IProcessWatcherFactory processWatcherFactory) : base(game)
+    internal PlayController(Game game, SteamLibrarySettingsModel settings, ILogger logger, ISteamLocalService steamService, ISteamAccountSwitcher accountSwitcher, IProcessWatcherFactory processWatcherFactory) : base(game)
     {
         this.logger = logger;
         this.settings = settings;

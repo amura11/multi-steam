@@ -1,7 +1,9 @@
 using System.Windows;
 using Playnite.SDK.Plugins;
 using Playnite.SteamFusion;
+using Playnite.SteamFusion.Plugin;
 using Playnite.SteamFusion.TestHarness.Mocks;
+using LibraryPlugin = Playnite.SteamFusion.Plugin.LibraryPlugin;
 
 namespace Playnite.SteamFusion.TestHarness
 {
@@ -11,12 +13,12 @@ namespace Playnite.SteamFusion.TestHarness
     public partial class MainWindow
     {
         private readonly MockPlayniteApi mockPlayniteApi;
-        private readonly SteamLibraryPlugin libraryPluginService;
+        private readonly LibraryPlugin libraryPluginService;
 
         public MainWindow()
         {
             this.mockPlayniteApi = new MockPlayniteApi();
-            this.libraryPluginService = new SteamLibraryPlugin(this.mockPlayniteApi);
+            this.libraryPluginService = new LibraryPlugin(this.mockPlayniteApi);
 
             InitializeComponent();
 

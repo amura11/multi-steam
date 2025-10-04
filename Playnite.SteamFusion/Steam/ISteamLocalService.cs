@@ -11,4 +11,8 @@ public interface ISteamLocalService
     bool LaunchGame(string gameId);
 
     bool InstallGame(string gameId);
+
+    bool IsGameInstalled(string gameId);
+
+    InstalledSteamGame? GetInstallInformation(string applicationId);
 }

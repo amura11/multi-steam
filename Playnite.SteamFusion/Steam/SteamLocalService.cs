@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using Gameloop.Vdf;
 using Gameloop.Vdf.Linq;
 using Microsoft.Win32;
@@ -17,6 +18,9 @@ namespace Playnite.SteamFusion.Steam
         private static DateTime? loginFileLastWriteTime = null;
         private static string? activeSteamId = null;
         private static readonly object lockObject = new object();
+
+        private static List<InstalledSteamGame>? cachedGames = null;
+        private static DateTime? lastMaxWriteTime = null;
 
         private readonly ILogger logger;
 
@@ -50,28 +54,60 @@ namespace Playnite.SteamFusion.Steam
 
         public List<InstalledSteamGame> GetInstalledGames()
         {
-            var installedGames = new List<InstalledSteamGame>();
-
             var configPath = Path.Combine(this.SteamInstallPath, "steamapps", "libraryfolders.vdf");
             if (!File.Exists(configPath))
             {
-                return installedGames;
+                return new List<InstalledSteamGame>();
             }
 
             var libraryFolders = ParseLibraryFoldersManifest(configPath);
+            var currentMaxWriteTime = File.GetLastWriteTimeUtc(configPath);
 
+            // Find the newest write time across all manifest files
             foreach (var libraryPath in libraryFolders.Values)
             {
                 var steamAppsPath = Path.Combine(libraryPath, "steamapps");
-
                 foreach (var manifestFile in Directory.EnumerateFiles(steamAppsPath, "appmanifest_*.acf"))
                 {
-                    var game = ParseGameManifest(manifestFile, libraryPath);
-                    installedGames.Add(game);
+                    var writeTime = File.GetLastWriteTimeUtc(manifestFile);
+                    if (writeTime > currentMaxWriteTime)
+                    {
+                        currentMaxWriteTime = writeTime;
+                    }
                 }
             }
 
-            return installedGames;
+            if (cachedGames == null || lastMaxWriteTime != currentMaxWriteTime)
+            {
+                var installedGames = new List<InstalledSteamGame>();
+
+                foreach (var libraryPath in libraryFolders.Values)
+                {
+                    var steamAppsPath = Path.Combine(libraryPath, "steamapps");
+
+                    foreach (var manifestFile in Directory.EnumerateFiles(steamAppsPath, "appmanifest_*.acf"))
+                    {
+                        var game = ParseGameManifest(manifestFile, libraryPath);
+                        installedGames.Add(game);
+                    }
+                }
+
+                cachedGames = installedGames;
+                lastMaxWriteTime = currentMaxWriteTime;
+            }
+
+            return cachedGames;
+        }
+
+        public InstalledSteamGame? GetInstallInformation(string applicationId)
+        {
+            var parsedId = int.Parse(applicationId);
+            
+            var installedGames = GetInstalledGames();
+
+            var game = installedGames.FirstOrDefault(x => x.Id == parsedId);
+
+            return game;
         }
 
         public string? GetActiveSteamId()
@@ -124,6 +160,20 @@ namespace Playnite.SteamFusion.Steam
             var arguments = $"steam://install/{gameId}";
 
             return Run(arguments);
+        }
+
+        public bool IsGameInstalled(string gameId)
+        {
+            var found = false;
+
+            if (int.TryParse(gameId, out var id))
+            {
+                var installedGames = GetInstalledGames();
+
+                found = installedGames.Any(x => x.Id == id);
+            }
+
+            return found;
         }
 
         private bool Run(string arguments)

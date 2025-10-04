@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Playnite.SDK;
 using Playnite.SteamFusion.Steam;
 
-namespace Playnite.SteamFusion.Plugin;
+namespace Playnite.SteamFusion.AccountSwitcher;
 
 public class SteamAccountSwitcher : ISteamAccountSwitcher
 {

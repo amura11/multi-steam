@@ -7,6 +7,7 @@ using System.Windows;
 using Microsoft.Win32;
 using Playnite.SDK;
 using Playnite.SDK.Data;
+using Playnite.SteamFusion.Plugin;
 using Playnite.SteamFusion.Steam;
 using Playnite.SteamFusion.SwitcherTool;
 
@@ -17,7 +18,7 @@ namespace Playnite.SteamFusion
     public class SteamLibrarySettingsViewModel : ObservableObject, ISettings
     {
         private readonly ISwitcherToolService switcherToolService;
-        private readonly ISteamLibraryPluginService pluginService;
+        private readonly ILibraryPluginService pluginService;
         private readonly IPlayniteAPI playniteApi;
         private SteamLibrarySettingsModel? editingClone;
         private SteamLibrarySettingsModel settings = null!;
@@ -34,10 +35,10 @@ namespace Playnite.SteamFusion
 
         private readonly ILogger logger;
 
-        public SteamLibrarySettingsViewModel(ISteamLibraryPluginService pluginService, IPlayniteAPI playniteApi)
+        public SteamLibrarySettingsViewModel(ILibraryPluginService pluginService, IPlayniteAPI playniteApi)
             : this(pluginService, playniteApi, LogManager.GetLogger(), new SwitcherToolService(pluginService.GetPluginUserDataPath())) { }
 
-        public SteamLibrarySettingsViewModel(ISteamLibraryPluginService pluginService, IPlayniteAPI playniteApi, ILogger logger, ISwitcherToolService switcherToolService)
+        public SteamLibrarySettingsViewModel(ILibraryPluginService pluginService, IPlayniteAPI playniteApi, ILogger logger, ISwitcherToolService switcherToolService)
         {
             // Injecting your plugin instance is required for Save/Load method because Playnite saves data to a location based on what plugin requested the operation.
             this.pluginService = pluginService;

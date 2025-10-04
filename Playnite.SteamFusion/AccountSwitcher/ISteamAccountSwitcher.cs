@@ -1,7 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 
-namespace Playnite.SteamFusion.Plugin;
+namespace Playnite.SteamFusion.AccountSwitcher;
 
 public interface ISteamAccountSwitcher
 {

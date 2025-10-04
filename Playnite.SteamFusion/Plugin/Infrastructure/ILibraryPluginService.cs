@@ -1,6 +1,6 @@
-﻿namespace Playnite.SteamFusion;
+﻿namespace Playnite.SteamFusion.Plugin;
 
-public interface ISteamLibraryPluginService
+public interface ILibraryPluginService
 {
     public SteamLibrarySettingsModel? LoadPluginSettings();
 
