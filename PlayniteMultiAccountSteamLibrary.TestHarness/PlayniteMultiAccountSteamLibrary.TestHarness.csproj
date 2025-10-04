@@ -37,8 +37,8 @@
         <WarningLevel>4</WarningLevel>
     </PropertyGroup>
     <ItemGroup>
-        <Reference Include="Playnite.SDK, Version=6.12.0.0, Culture=neutral, processorArchitecture=MSIL">
-          <HintPath>..\packages\PlayniteSDK.6.12.0\lib\net462\Playnite.SDK.dll</HintPath>
+        <Reference Include="Playnite.SDK, Version=6.13.0.0, Culture=neutral, processorArchitecture=MSIL">
+          <HintPath>..\packages\PlayniteSDK.6.13.0\lib\net462\Playnite.SDK.dll</HintPath>
         </Reference>
         <Reference Include="System"/>
         <Reference Include="System.Core"/>
@@ -90,10 +90,6 @@
         <None Include="packages.config" />
     </ItemGroup>
     <ItemGroup>
-      <ProjectReference Include="..\PlayniteMultiAccountSteamLibrary.csproj">
-        <Project>{2351b5c1-6e28-4b79-a1d9-90fda53b5417}</Project>
-        <Name>PlayniteMultiAccountSteamLibrary</Name>
-      </ProjectReference>
       <ProjectReference Include="..\PlayniteMultiAccountSteamLibrary.Extension\PlayniteMultiAccountSteamLibrary.Extension.csproj">
         <Project>{2351b5c1-6e28-4b79-a1d9-90fda53b5417}</Project>
         <Name>PlayniteMultiAccountSteamLibrary.Extension</Name>
