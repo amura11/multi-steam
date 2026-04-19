@@ -29,7 +29,7 @@ namespace Playnite.SteamFusion.Steam
 
         public string? GetLogoUrl()
         {
-            return string.IsNullOrWhiteSpace(this.IconFileName) ? null : $"https://media.steampowered.com/steamcommunity/public/images/apps/{this.Id}/{this.LogoFileName}.jpg";
+            return string.IsNullOrWhiteSpace(this.LogoFileName) ? null : $"https://media.steampowered.com/steamcommunity/public/images/apps/{this.Id}/{this.LogoFileName}.jpg";
         }
 
         public string? GetStatsUrl(string steamId)

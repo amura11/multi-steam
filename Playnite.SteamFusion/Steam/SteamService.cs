@@ -55,7 +55,8 @@ namespace Playnite.SteamFusion.Steam
                     GameId = ownedGame.Id.ToString(),
                     OwnerName = this.accountName,
                     OwnerId = this.steamId,
-                    LogoUrl = ownedGame.GetIconUrl(),
+                    IconUrl = ownedGame.GetIconUrl(),
+                    LogoUrl = ownedGame.GetLogoUrl(),
                     IsInstalled = installedGame != null,
                     InstallLocation = installedGame?.InstallDirectory
                 };

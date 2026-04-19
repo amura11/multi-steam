@@ -30,6 +30,12 @@ public class SteamAccountSwitcher : ISteamAccountSwitcher
         if (await WaitForAccountSwitch(steamId, cancellationToken))
         {
             success = await WaitForSteamLaunch(cancellationToken);
+
+            if (success && this.settings.StartupDelay > 0)
+            {
+                this.logger.Info($"Waiting {this.settings.StartupDelay} seconds for Steam to initialize...");
+                await Task.Delay(this.settings.StartupDelay * 1000, cancellationToken);
+            }
         }
 
         return success;

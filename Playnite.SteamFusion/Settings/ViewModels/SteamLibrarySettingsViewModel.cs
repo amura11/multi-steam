@@ -174,7 +174,8 @@ namespace Playnite.SteamFusion
                 errors.Add(this.playniteApi.Resources.GetString("ErrorAccountEditing"));
             }
 
-            if (string.IsNullOrWhiteSpace(this.Settings.LauncherLocation) || File.Exists(this.Settings.LauncherLocation) == false)
+            if (this.Settings.SteamAccountSettings.Count > 0 &&
+                (string.IsNullOrWhiteSpace(this.Settings.LauncherLocation) || File.Exists(this.Settings.LauncherLocation) == false))
             {
                 errors.Add(this.playniteApi.Resources.GetString("ErrorInvalidLauncherLocation"));
             }
