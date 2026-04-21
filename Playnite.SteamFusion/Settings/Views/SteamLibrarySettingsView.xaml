@@ -36,7 +36,13 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
+    <!--ENABLE_IN_RELEASE -->
+    <!--<Grid>-->
+    <!--/ENABLE_IN_RELEASE -->
+
+    <!--DISABLE_IN_RELEASE -->
     <Grid Background="{DynamicResource WindowBackgourndBrush}">
+    <!--/DISABLE_IN_RELEASE -->    
         <StackPanel>
             <StackPanel Margin="20">
                 <TextBlock Style="{DynamicResource HeaderTextBlock}" Text="{DynamicResource HeaderSwitcherToolSettings}" />
@@ -180,6 +186,30 @@
                 </ItemsControl>
 
                 <Button Command="{Binding AddSteamAccountCommand}" Content="{DynamicResource ButtonAddAccount}" />
+            </StackPanel>
+
+            <!--  Debug  -->
+            <StackPanel
+                Margin="20"
+                Visibility="{Binding IsDebugModeAvailable, Converter={StaticResource BoolToVisibilityConverter}}">
+                <TextBlock Style="{DynamicResource HeaderTextBlock}" Text="{DynamicResource HeaderDebug}" />
+                <Border
+                    Background="{DynamicResource GridItemBackgroundBrush}"
+                    CornerRadius="4"
+                    Padding="10">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button
+                            Command="{Binding AttachDebuggerCommand}"
+                            Content="{DynamicResource ButtonAttachDebugger}"
+                            MinWidth="130" />
+                        <TextBlock
+                            Foreground="{DynamicResource PositiveRatingBrush}"
+                            Margin="12,0,0,0"
+                            Text="{DynamicResource LabelDebuggerAttached}"
+                            VerticalAlignment="Center"
+                            Visibility="{Binding IsDebuggerAttached, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    </StackPanel>
+                </Border>
             </StackPanel>
         </StackPanel>
 

@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
 using Microsoft.Win32;
@@ -32,6 +34,7 @@ namespace Playnite.SteamFusion
         private string? installErrorMessage;
         private string? addEditSteamAccountValidationMessage;
         private bool isTestingAccountCredentials;
+        private readonly bool isDebugModeAvailable;
 
         private readonly ILogger logger;
 
@@ -59,7 +62,12 @@ namespace Playnite.SteamFusion
             this.CompleteEditSteamAccountCommand = new RelayCommand(CompleteAddEditSteamAccount, CanCompleteAddEditSteamAccount);
             this.BrowseForSwitcherToolCommand = new RelayCommand(BrowseForSwitcherTool);
             this.InstallSwitcherToolCommand = new RelayCommand(InstallSwitcherTool, CanInstallSwitcherTool);
+            this.AttachDebuggerCommand = new RelayCommand(AttachDebugger);
             this.Settings.PropertyChanged += OnSettingsChanged;
+
+            var assemblyPath = Assembly.GetExecutingAssembly().Location;
+            var pdbPath = Path.ChangeExtension(assemblyPath, ".pdb");
+            this.isDebugModeAvailable = File.Exists(pdbPath);
 
             _ = UpdateSwitcherToolInfoAsync();
         }
@@ -77,6 +85,12 @@ namespace Playnite.SteamFusion
         public RelayCommand BrowseForSwitcherToolCommand { get; }
 
         public RelayCommand InstallSwitcherToolCommand { get; }
+
+        public RelayCommand AttachDebuggerCommand { get; }
+
+        public bool IsDebugModeAvailable => this.isDebugModeAvailable;
+
+        public bool IsDebuggerAttached => Debugger.IsAttached;
 
         public bool IsAccountEditorVisible => this.editingAccount != null;
 
@@ -309,6 +323,13 @@ namespace Playnite.SteamFusion
             {
                 this.IsTestingAccountCredentials = false;
             }
+        }
+
+        private void AttachDebugger()
+        {
+            this.logger.Info("User requested debugger attachment");
+            Debugger.Launch();
+            OnPropertyChanged(nameof(this.IsDebuggerAttached));
         }
 
         private void BrowseForSwitcherTool()

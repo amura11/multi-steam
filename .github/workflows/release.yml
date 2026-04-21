@@ -1,0 +1,110 @@
+on:
+  push:
+    tags:
+      - '*'
+
+name: Release Build
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v2
+
+      - name: Apply DISABLE_IN_RELEASE and ENABLE_IN_RELEASE blocks
+        run: |
+          Get-ChildItem -Recurse -Filter "*.xaml" | ForEach-Object {
+            $lines = Get-Content $_.FullName
+            $block = $null
+            $changed = $false
+            $result = $lines | ForEach-Object {
+              $trimmed = $_.Trim()
+              if ($trimmed -eq '<!--DISABLE_IN_RELEASE-->') {
+                $block = 'disable'; $_
+              } elseif ($trimmed -eq '<!--/DISABLE_IN_RELEASE-->') {
+                $block = $null; $_
+              } elseif ($trimmed -eq '<!--ENABLE_IN_RELEASE-->') {
+                $block = 'enable'; $_
+              } elseif ($trimmed -eq '<!--/ENABLE_IN_RELEASE-->') {
+                $block = $null; $_
+              } elseif ($block -eq 'disable' -and $trimmed -ne '' -and -not ($trimmed -match '^<!--' -and $trimmed -match '-->$')) {
+                $changed = $true
+                $indent = $_ -replace '^(\s*).*', '$1'
+                "${indent}<!--$($_.TrimStart())-->"
+              } elseif ($block -eq 'enable' -and $trimmed -match '^<!--' -and $trimmed -match '-->$') {
+                $changed = $true
+                $indent = $_ -replace '^(\s*).*', '$1'
+                "${indent}$($trimmed -replace '^<!--(.*)-->$', '$1')"
+              } else { $_ }
+            }
+            if ($changed) { $result | Set-Content $_.FullName }
+          }
+
+      - name: Restore NuGet packages
+        run: nuget restore SteamFusion.sln
+
+      - name: Setup Playnite
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/JosefNemec/Playnite/releases/download/10.52/10.52.7z" -OutFile "$Env:GITHUB_WORKSPACE\Playnite.7z"
+          & "$env:ProgramFiles\7-Zip\7z.exe" x "$Env:GITHUB_WORKSPACE\Playnite.7z" "-o$env:GITHUB_WORKSPACE\Playnite"
+
+      - name: Build
+        run: msbuild Playnite.SteamFusion\Playnite.SteamFusion.csproj -p:Configuration=Release
+
+      - name: Get version from tag
+        id: version
+        run: |
+          $ver = "${{ github.ref_name }}" -replace '\.', '_'
+          echo "ver=$ver" >> $env:GITHUB_OUTPUT
+          $isPrerelease = "${{ github.ref_name }}" -match '-'
+          echo "is_prerelease=$($isPrerelease.ToString().ToLower())" >> $env:GITHUB_OUTPUT
+
+      - name: Pack without symbols
+        run: |
+          $buildDir  = "$Env:GITHUB_WORKSPACE\Playnite.SteamFusion\bin\Release"
+          $stagingDir = "$Env:GITHUB_WORKSPACE\staging-no-symbols"
+          $outputDir  = "$Env:GITHUB_WORKSPACE\output-no-symbols"
+
+          New-Item -ItemType Directory -Path $stagingDir, $outputDir | Out-Null
+          Copy-Item "$buildDir\*" $stagingDir -Recurse
+
+          # Remove any DLLs that Playnite already ships (e.g. Playnite.SDK.dll)
+          $playniteDlls = Get-ChildItem "$Env:GITHUB_WORKSPACE\Playnite" -Filter *.dll -Name
+          Remove-Item "$stagingDir\*" -Include $playniteDlls
+
+          # Strip symbols
+          Get-ChildItem $stagingDir -Filter *.pdb | Remove-Item
+
+          & "$Env:GITHUB_WORKSPACE\Playnite\Toolbox.exe" pack $stagingDir $outputDir
+          Move-Item "$outputDir\*.pext" "$Env:GITHUB_WORKSPACE\Playnite.SteamFusion_${{ steps.version.outputs.ver }}.pext"
+
+      - name: Pack with symbols
+        run: |
+          $buildDir   = "$Env:GITHUB_WORKSPACE\Playnite.SteamFusion\bin\Release"
+          $stagingDir = "$Env:GITHUB_WORKSPACE\staging-with-symbols"
+          $outputDir  = "$Env:GITHUB_WORKSPACE\output-with-symbols"
+
+          New-Item -ItemType Directory -Path $stagingDir, $outputDir | Out-Null
+          Copy-Item "$buildDir\*" $stagingDir -Recurse
+
+          # Remove any DLLs that Playnite already ships (e.g. Playnite.SDK.dll)
+          $playniteDlls = Get-ChildItem "$Env:GITHUB_WORKSPACE\Playnite" -Filter *.dll -Name
+          Remove-Item "$stagingDir\*" -Include $playniteDlls
+
+          # PDB files are kept — no removal step
+
+          & "$Env:GITHUB_WORKSPACE\Playnite\Toolbox.exe" pack $stagingDir $outputDir
+          Move-Item "$outputDir\*.pext" "$Env:GITHUB_WORKSPACE\Playnite.SteamFusion_${{ steps.version.outputs.ver }}_symbols.pext"
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: false
+          prerelease: ${{ steps.version.outputs.is_prerelease }}
+          files: '*.pext'

@@ -30,4 +30,7 @@
     <sys:String x:Key="ErrorAccountFieldsRequired">All fields are required.</sys:String>
     <sys:String x:Key="ErrorAccountIdNotUnique">The Steam ID must be unique.</sys:String>
     <sys:String x:Key="ErrorAccountNameNotUnique">The account name must be unique.</sys:String>
+    <sys:String x:Key="HeaderDebug">Debug</sys:String>
+    <sys:String x:Key="ButtonAttachDebugger">Attach Debugger</sys:String>
+    <sys:String x:Key="LabelDebuggerAttached">Debugger attached</sys:String>
 </ResourceDictionary>

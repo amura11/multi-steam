@@ -6,6 +6,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006">
     <Application.Resources>
+        <!--DISABLE_IN_RELEASE-->
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/Playnite.SteamFusion;component/Localization/en_US.xaml" />
@@ -13,5 +14,6 @@
                 <ResourceDictionary Source="pack://application:,,,/Playnite.SteamFusion;component/Reference/Constants.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
+        <!--/DISABLE_IN_RELEASE-->
     </Application.Resources>
 </Application>
